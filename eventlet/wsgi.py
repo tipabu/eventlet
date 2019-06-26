@@ -475,9 +475,11 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         start = time.time()
         headers_set = []
         headers_sent = []
+        # Grab the request input now; app may try to replace it in the environ
+        request_input = self.environ['eventlet.input']
         # Push the headers-sent state into the Input so it won't send a
         # 100 Continue response if we've already started a response.
-        self.environ['wsgi.input'].headers_sent = headers_sent
+        request_input.headers_sent = headers_sent
 
         wfile = self.wfile
         result = None
@@ -610,11 +612,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             if hasattr(result, 'close'):
                 result.close()
-            request_input = self.environ['eventlet.input']
             if (request_input.chunked_input or
                     request_input.position < (request_input.content_length or 0)):
-                # Read and discard body if there was no pending 100-continue
-                if not request_input.wfile and self.close_connection == 0:
+                # Read and discard body if connection is going to be reused
+                if self.close_connection == 0:
                     try:
                         request_input.discard()
                     except ChunkReadError as e:
