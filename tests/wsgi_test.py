@@ -784,6 +784,8 @@ class TestHttpd(_TestBase):
     def test_024_expect_100_continue(self):
         def wsgi_app(environ, start_response):
             if int(environ['CONTENT_LENGTH']) > 1024:
+                if environ['PATH_INFO'] == '/bail-hard':
+                    wsgi.WSGI_LOCAL.close_connection = True
                 start_response('417 Expectation Failed', [('Content-Length', '7')])
                 return [b'failure']
             else:
@@ -803,6 +805,31 @@ class TestHttpd(_TestBase):
         # because even though the server sent the response without reading the body,
         # it has no way of knowing whether the client already started sending or not
         fd.write(b'x' * 1025)
+
+        fd.write(b'PUT /bail-hard HTTP/1.1\r\nHost: localhost\r\nContent-length: 1025\r\n'
+                 b'Expect: 100-continue\r\n\r\n')
+        fd.flush()
+        result = read_http(sock)
+        self.assertEqual(result.status, 'HTTP/1.1 417 Expectation Failed')
+        self.assertEqual(result.body, b'failure')
+        # This time, the server hung up; client can still write just fine, though,
+        # it's mostly just filling buffers
+        fd.write(b'x' * 101)
+        fd.flush()
+        fd.write(b'x' * 512)
+        # a second flush will discover the hang-up, though
+        with self.assertRaises(OSError) as caught:
+            fd.flush()
+        self.assertEqual(caught.exception.errno, errno.EPIPE)
+        fd.write(b'x' * 412)  # still OK-ish??
+        # This read would deadlock if the server's still waiting for a request
+        self.assertEqual(fd.readline(), b'')
+        # We can do this all day
+        self.assertEqual(fd.readline(), b'')
+        sock.close()
+
+        sock = eventlet.connect(self.server_addr)
+        fd = sock.makefile('rwb')
 
         for expect_value in ('100-continue', '100-Continue'):
             fd.write(

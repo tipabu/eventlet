@@ -372,6 +372,14 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 raise NotImplementedError(
                     '''eventlet.wsgi doesn't support sockets of type {0}'''.format(type(conn)))
 
+    @property
+    def close_connection(self):
+        return WSGI_LOCAL.close_connection
+
+    @close_connection.setter
+    def close_connection(self, value):
+        WSGI_LOCAL.close_connection = value
+
     def handle(self):
         self.close_connection = True
 
