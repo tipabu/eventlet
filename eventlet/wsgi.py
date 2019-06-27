@@ -258,9 +258,19 @@ class Input(object):
                 for key, value in headers]
         self.hundred_continue_headers = headers
 
-    def discard(self, buffer_size=16 << 10):
-        while self.read(buffer_size):
-            pass
+    def discard(self, buffer_size=16 << 10, max_discard=None):
+        if max_discard is None:
+            while self.read(buffer_size):
+                pass
+        else:
+            bytes_discarded = 0
+            chunk = self.read(min(buffer_size, max_discard + 1))
+            while chunk:
+                bytes_discarded += len(chunk)
+                if max_discard is not None and bytes_discarded > max_discard:
+                    raise IOError('client sent at least {} bytes but app said to hangup '
+                                  'after {}'.format(bytes_discarded, max_discard))
+                chunk = self.read(min(buffer_size, max_discard - bytes_discarded + 1))
 
 
 class HeaderLineTooLong(Exception):
@@ -617,7 +627,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 # Read and discard body if connection is going to be reused
                 if self.close_connection == 0:
                     try:
-                        request_input.discard()
+                        request_input.discard(max_discard=self.environ.get(
+                            'eventlet.max_discard'))
                     except ChunkReadError as e:
                         self.close_connection = 1
                         self.server.log.error((
