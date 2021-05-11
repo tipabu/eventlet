@@ -9,8 +9,6 @@ import socket as _orig_sock
 import sys
 import tempfile
 
-from nose.tools import eq_
-
 import eventlet
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
@@ -19,6 +17,10 @@ from eventlet.support import get_errno
 import six
 import tests
 import tests.mock as mock
+
+
+def eq_(a, b):
+    assert a == b, "{0} != {1}".format(a, b)
 
 
 def bufsized(sock, size=1):

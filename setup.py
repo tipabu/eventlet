@@ -27,7 +27,7 @@ setuptools.setup(
             'README.rst'
         )
     ).read(),
-    test_suite='nose.collector',
+    test_suite='tests',
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",

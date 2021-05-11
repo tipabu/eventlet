@@ -5,7 +5,6 @@
 @brief  Test DAGPool class
 """
 
-from nose.tools import *
 import eventlet
 from eventlet.dagpool import DAGPool, Collision, PropagateError
 import six
@@ -29,6 +28,10 @@ def assert_raises(exc):
 
 def assert_in(sought, container):
     assert sought in container, "{0} not in {1}".format(sought, container)
+
+
+def assert_equals(a, b):
+    assert a == b, "{0} != {1}".format(a, b)
 
 
 # ****************************************************************************
@@ -163,7 +166,7 @@ class Capture(object):
                     # a set. Make a set containing its elements.
                     setlist.append(set(subseq))
         # Now that we've massaged 'sequence' into 'setlist', compare.
-        assert_equal(self.sequence, setlist)
+        assert_equals(self.sequence, setlist)
 
 
 # ****************************************************************************
@@ -375,7 +378,7 @@ def test_spawn_multiple():
                   dict(a=1, b=2, c=3,
                        d="dval", e="eval", f="fval", g="gval", h="hval"))
     assert_equals(pool.running(), 0)
-    assert_false(pool.running_keys())
+    assert_equals(pool.running_keys(), tuple())
     assert_equals(pool.waiting(), 0)
     assert_equals(pool.waiting_for("h"), set())
 
