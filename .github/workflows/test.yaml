@@ -50,6 +50,9 @@ jobs:
           - { py: 3.9, toxenv: py39-poll, ignore-error: false }
           - { py: 3.9, toxenv: py39-selects, ignore-error: false }
           - { py: 3.9, toxenv: py39-dnspython1, ignore-error: false }
+          - { py: 3.10.0, toxenv: py310-epolls, ignore-error: false }
+          - { py: 3.10.0, toxenv: py310-poll, ignore-error: false }
+          - { py: 3.10.0, toxenv: py310-selects, ignore-error: false }
           - { py: 3.x, toxenv: ipv6, ignore-error: false }
           - { py: pypy2, toxenv: pypy2-epolls, ignore-error: true }
           - { py: pypy3, toxenv: pypy3-epolls, ignore-error: true }
